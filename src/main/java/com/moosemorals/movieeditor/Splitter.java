@@ -30,6 +30,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Scanner;
 import org.apache.http.client.utils.URIBuilder;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,8 @@ public class Splitter {
         if (finalResult.exists()) {
             finalResult.delete();
         }
+
+        Duration length = Duration.ZERO;
 
         try (PrintWriter out = new PrintWriter(new FileWriter(temp))) {
             for (TimingPair pair : pairs) {
@@ -78,6 +81,8 @@ public class Splitter {
                     throw new IOException("ffmpeg error, no details. Sorry.");
                 }
                 out.printf("file '%s'\n", partFile.getAbsolutePath());
+
+                length = length.plus(pair.getDuration());
             }
             out.flush();
         }
@@ -85,7 +90,7 @@ public class Splitter {
         String[] cmd = {
             "/usr/bin/ffmpeg",
             "-hide_banner",
-            "-progress", buildTargetURI(config),
+            "-progress", buildTargetURI(config, "start", TimingPair.format(Duration.ZERO), "duration", TimingPair.format(length)),
             "-loglevel", "0",
             "-f", "concat",
             "-safe", "0",

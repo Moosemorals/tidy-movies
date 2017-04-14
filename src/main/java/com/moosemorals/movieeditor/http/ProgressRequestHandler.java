@@ -56,7 +56,11 @@ public class ProgressRequestHandler implements HttpRequestHandler {
 
             HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 
+            TimingPair timing = getTimingPairFromUri(request.getRequestLine().getUri());
+
             BufferedReader in = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
+
+            long out_time_start = 0;
 
             String line;
             while ((line = in.readLine()) != null) {
@@ -66,11 +70,19 @@ public class ProgressRequestHandler implements HttpRequestHandler {
 
                 switch (key) {
                     case "progress":
-                        if (value.equals("continue")) {
-                            log.debug("tick");
-                        } else if (value.equals("end")) {
+                        if (value.equals("end")) {
                             log.debug("done");
                         }
+                        break;
+                    case "out_time_ms":
+                        if (out_time_start == 0) {
+                            out_time_start = Long.parseLong(value);
+                        } else {
+                            long done_ms = (Long.parseLong(value) - out_time_start) / 1000;
+
+                            log.debug("Percent done: {}%", ((float) done_ms / timing.getDuration().getMillis()) * 100);
+                        }
+
                         break;
                 }
             }
@@ -82,24 +94,27 @@ public class ProgressRequestHandler implements HttpRequestHandler {
         }
     }
 
-    private static TimingPair getTimingPairFromUri(String uri) throws URISyntaxException {
+    private static TimingPair getTimingPairFromUri(String uri) throws IOException {
 
-        String start = null, duration = null;
-        for (NameValuePair pair : new URIBuilder(uri).getQueryParams()) {
-            switch (pair.getName()) {
-                case "start":
-                    start = pair.getValue();
-                    break;
-                case "duration":
-                    duration = pair.getValue();
-                    break;
+        try {
+            String start = null, duration = null;
+            for (NameValuePair pair : new URIBuilder(uri).getQueryParams()) {
+                switch (pair.getName()) {
+                    case "start":
+                        start = pair.getValue();
+                        break;
+                    case "duration":
+                        duration = pair.getValue();
+                        break;
+                }
             }
-        }
-
-        if (start != null && duration != null) {
-            return new TimingPair(start, duration);
-        } else {
-            throw new URISyntaxException(uri, "Missing start or end parameters");
+            if (start != null && duration != null) {
+                return new TimingPair(start, duration);
+            } else {
+                throw new URISyntaxException(uri, "Missing start or end parameters");
+            }
+        } catch (URISyntaxException ex) {
+            throw new IOException(ex);
         }
     }
 }
