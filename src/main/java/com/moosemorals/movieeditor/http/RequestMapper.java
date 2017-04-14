@@ -23,6 +23,7 @@
  */
 package com.moosemorals.movieeditor.http;
 
+import com.moosemorals.movieeditor.ProgressMonitor;
 import org.apache.http.HttpRequest;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.protocol.HttpRequestHandlerMapper;
@@ -36,8 +37,11 @@ import org.slf4j.LoggerFactory;
 public class RequestMapper implements HttpRequestHandlerMapper {
 
     private final Logger log = LoggerFactory.getLogger(RequestMapper.class);
+    private final ProgressRequestHandler handler;
 
-    private final ProgressRequestHandler handler = new ProgressRequestHandler();
+    public RequestMapper(ProgressMonitor monitor) {
+        handler = new ProgressRequestHandler(monitor);
+    }
 
     @Override
     public HttpRequestHandler lookup(HttpRequest request) {

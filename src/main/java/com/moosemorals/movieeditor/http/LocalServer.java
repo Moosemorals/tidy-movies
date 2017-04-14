@@ -23,6 +23,7 @@
  */
 package com.moosemorals.movieeditor.http;
 
+import com.moosemorals.movieeditor.ProgressMonitor;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.ExceptionLogger;
@@ -48,7 +49,7 @@ public class LocalServer implements Runnable {
 
     private final HttpServer server;
 
-    public LocalServer(int port) {
+    public LocalServer(int port, ProgressMonitor monitor) {
 
         HttpProcessor httpproc = HttpProcessorBuilder.create()
                 .add(new ResponseDate())
@@ -67,7 +68,7 @@ public class LocalServer implements Runnable {
                 .setHttpProcessor(httpproc)
                 .setSocketConfig(socketConfig)
                 .setExceptionLogger(new ExceptionLoggerImpl())
-                .setHandlerMapper(new RequestMapper())
+                .setHandlerMapper(new RequestMapper(monitor))
                 .create();
 
     }

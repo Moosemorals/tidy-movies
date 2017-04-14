@@ -23,8 +23,10 @@
  */
 package com.moosemorals.movieeditor;
 
+import java.awt.BorderLayout;
 import javax.swing.JFrame;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,19 +37,26 @@ import org.slf4j.LoggerFactory;
 public class UI {
 
     private final Logger log = LoggerFactory.getLogger(UI.class);
-    private final Main main;
 
-    private static final String ACTION_EXIT = "Exit";
-    private static final String ACTION_AUTH = "Auth";
+    private final JFrame frame;
 
-    public UI(Main main) {
+    public UI(ProgressMonitor monitor) {
 
-        this.main = main;
+        frame = new JFrame("Movie Splitter");
 
-        JFrame frame = new JFrame("Movie Splitter");
+        JProgressBar bar = new JProgressBar(monitor);
 
-        JProgressBar bar = new JProgressBar();
+        frame.setLayout(new BorderLayout());
+        frame.add(bar, BorderLayout.CENTER);
 
+        frame.pack();
+
+    }
+
+    public void start() {
+        SwingUtilities.invokeLater(() -> {
+            frame.setVisible(true);
+        });
     }
 
 }

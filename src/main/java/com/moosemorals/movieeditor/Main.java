@@ -44,13 +44,19 @@ public class Main {
                 .setPort(25245)
                 .build();
 
-        LocalServer httpServer = new LocalServer(config.getPort());
-
-        httpServer.start();
-
         List<TimingPair> timingPairs = TimingDataParser.parse(new InputStreamReader(Main.class.getResourceAsStream("/timingData"), "utf-8"));
 
+        ProgressMonitor monitor = new ProgressMonitor(timingPairs);
+
+        UI ui = new UI(monitor);
+        LocalServer httpServer = new LocalServer(config.getPort(), monitor);
+
+        httpServer.start();
+        ui.start();
+
         Splitter.split(config, timingPairs);
+
+        httpServer.stop();
     }
 
 }

@@ -23,6 +23,7 @@
  */
 package com.moosemorals.movieeditor.http;
 
+import com.moosemorals.movieeditor.ProgressMonitor;
 import com.moosemorals.movieeditor.TimingPair;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,6 +49,11 @@ import org.slf4j.LoggerFactory;
 public class ProgressRequestHandler implements HttpRequestHandler {
 
     private final Logger log = LoggerFactory.getLogger(ProgressRequestHandler.class);
+    private final ProgressMonitor monitor;
+
+    public ProgressRequestHandler(ProgressMonitor monitor) {
+        this.monitor = monitor;
+    }
 
     @Override
     public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
@@ -61,6 +67,7 @@ public class ProgressRequestHandler implements HttpRequestHandler {
             BufferedReader in = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
 
             long out_time_start = 0;
+            float lastPercent = 0;
 
             String line;
             while ((line = in.readLine()) != null) {
@@ -79,14 +86,18 @@ public class ProgressRequestHandler implements HttpRequestHandler {
                             out_time_start = Long.parseLong(value);
                         } else {
                             long done_ms = (Long.parseLong(value) - out_time_start) / 1000;
+                            float currentPercent = ((float) done_ms / timing.getDuration().getMillis()) - lastPercent;
 
-                            log.debug("Percent done: {}%", ((float) done_ms / timing.getDuration().getMillis()) * 100);
+                            monitor.addDuration(currentPercent);
+                            lastPercent += currentPercent;
+                            log.debug("Percent done: {}%", currentPercent * 100);
                         }
 
                         break;
                 }
             }
 
+            monitor.fileCompleted();
             EntityUtils.consumeQuietly(entity);
 
         } else {
